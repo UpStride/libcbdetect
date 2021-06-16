@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 2.8)
-project(Libcbdetect)
+cmake_policy(SET CMP0048 NEW)
+project(Libcbdetect VERSION 1.0)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
 set(CMAKE_LIBRARY_PATH ${PROJECT_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE})
 
 if (UNIX)
-  set(CMAKE_CXX_COMPILER g++)
+#   set(CMAKE_CXX_COMPILER g++)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fopenmp")
   add_definitions(-DUNIX)
 elseif (WIN32)
@@ -34,6 +35,9 @@ set(THIRD_PARTY_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 set(THIRD_PARTY_LIBS ${OpenCV_LIBS})
 include_directories(${THIRD_PARTY_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/include)
+
+# Add python binding
+add_subdirectory(${PROJECT_SOURCE_DIR}/pybind11)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/libcbdetect)
