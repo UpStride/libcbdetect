@@ -10,9 +10,11 @@
 namespace py = pybind11;
 
 
-std::vector<std::vector<std::vector<double>>> detect(const char* filename) {
-    std::vector<std::vector<std::vector<double>>> output;
-    std::vector<std::vector<double>> checkerboard;
+std::vector<std::vector<std::vector<std::vector<double>>>> detect(const char* filename) {
+    std::vector<std::vector<std::vector<std::vector<double>>>> checkerboards;
+    std::vector<std::vector<std::vector<double>>> checkerboard;
+    std::vector<std::vector<double>> checkerboard_row;
+
     cbdetect::Corner corners;
     std::vector<cbdetect::Board> boards;  
     cbdetect::Params params;
@@ -33,28 +35,25 @@ std::vector<std::vector<std::vector<double>>> detect(const char* filename) {
 
     // loop boards
     for (const auto& board: boards) {
-        printf("%d %d\n", (int)(board.idx[0].size() - 2), (int)(board.idx.size() - 2));
-        std::cout << (int)(board.idx[0].size() - 2) << (int)(board.idx.size() - 2) << std::endl;
         // loop board rows
-        bool first = true;
         for (const auto& row: board.idx) {
             // loop row indices
             for (const int i: row) {
-                if (i < 0)
-                continue;
-                if (!first)
-                printf(" ");
-                first = false;
+                if (i < 0) {
+                    continue;
+                }
                 const cv::Point2d corner(corners.p[i]);
-                printf("%0.3f %0.3f", corner.x, corner.y);
-                checkerboard.push_back({corner.x, corner.y});  
+                checkerboard_row.push_back({corner.x, corner.y});
+            }
+            if (checkerboard_row.size() != 0) {
+                checkerboard.push_back(checkerboard_row);
+                checkerboard_row.clear();
             }
         }
-        output.push_back(checkerboard);
+        checkerboards.push_back(checkerboard);
         checkerboard.clear();
-        printf("\n");
     }
-    return output;
+    return checkerboards;
 }
 
 
