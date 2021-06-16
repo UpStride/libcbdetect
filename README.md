@@ -4,14 +4,14 @@ Libcbdetect
 - Deltille detector.  
 
 Libdetect is a fully automatic sub-pixel checkerboard / chessboard / deltille pattern detection. The algorithm autmatically extracts corners to sub-pixel accuracy and combines them to (rectangular) checkerboards / chessboard-like / deltille patterns.  
-  
+
 My calibration tool: [Libcalib](https://github.com/ftdlyc/libcalib)
-  
+
 #### Require
 - C++ 14  
 - Opencv >= 3.0  
-  
-#### Example
+
+#### C++ Example
 > using namespace cbdetect;  
 > cv::Mat img = cv::imread("image.bmp", cv::IMREAD_COLOR);  
 > Params params;  
@@ -19,11 +19,34 @@ My calibration tool: [Libcalib](https://github.com/ftdlyc/libcalib)
 > plot_corners(img, corners);  
 > boards_from_corners(corners, boards);  
 > plot_boards(img, corners, boards);  
-  
+
 ![image](https://github.com/ftdlyc/libcbdetect/blob/master/example_data/e2_result.png)  
 ![image](https://github.com/ftdlyc/libcbdetect/blob/master/example_data/e6_result.png)  
 ![image](https://github.com/ftdlyc/libcbdetect/blob/master/example_data/e7_result.png)  
-  
+
+#### Python Example
+
+1. Build docker `docker build -t libcbdetect .`
+
+2. Run docker
+
+        xhost + && \
+        docker run -it -u 0 --network=host \
+            -v $(pwd):/workspace \
+            -e DISPLAY=unix$DISPLAY \
+            --name libcbdetect_instance
+            -v /tmp/.X11-unix:/tmp/.X11-unix libcbdetect
+
+3. Compile libcbdetect binding
+
+        mkdir build && \
+        cd build && \
+        cmake .. && \
+        make -j 4 && \
+        cd -
+
+4. Run Python example `PYTHONPATH=lib/ python3 example.py`
+
 #### Reference Papers
 [1] Geiger, A., Moosmann, F., Car, Ö., & Schuster, B. (2012, May). Automatic camera and range sensor calibration using a single shot. In Robotics and Automation (ICRA), 2012 IEEE International Conference on (pp. 3936-3943). IEEE.  
 [2] Schönbein, M., Strauß, T., & Geiger, A. (2014, May). Calibrating and centering quasi-central catadioptric cameras. In Robotics and Automation (ICRA), 2014 IEEE International Conference on (pp. 4443-4450). IEEE.  
