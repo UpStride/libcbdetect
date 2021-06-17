@@ -24,8 +24,9 @@ std::vector<py::array_t<double>> detect(const py::array_t<uint8_t>& img_py) {
     // cast image and verify its correctness
     auto rows = img_py.shape(0);
     auto cols = img_py.shape(1);
-    auto type = CV_8UC3;
-    cv::Mat img(rows, cols, type, (unsigned char*)img_py.data());
+    bool grayscale_img = (img_py.ndim() == 2) ? true : false;
+    auto type = (grayscale_img) ? CV_8UC1 : CV_8UC3;
+    cv::Mat img(rows, cols, type, const_cast<uint8_t *>(img_py.data()));
     if (img.empty())
         throw std::runtime_error("The image is empty.");
 
