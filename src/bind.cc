@@ -10,9 +10,9 @@
 namespace py = pybind11;
 
 
-std::vector<py::array_t<double>> detect(const char* filename) {
+std::vector<py::array_t<double>> detect(const py::array_t<uint8_t>& img_py) {
     std::vector<py::array_t<double>> output;
-    py::array_t<double> boardPyArray;
+    py::array_t<double> board_py_array;
 
     cbdetect::Corner corners;
     std::vector<cbdetect::Board> boards;  
@@ -21,12 +21,13 @@ std::vector<py::array_t<double>> detect(const char* filename) {
     params.corner_type = cbdetect::SaddlePoint;
     params.show_processing = false;
 
-    // load image
-    cv::Mat img = cv::imread(filename, cv::IMREAD_COLOR);
-    if (img.empty()) {
-        std::cout << "Image not found!" << std::endl;
-        exit(123);
-    }
+    // cast image and verify its correctness
+    auto rows = img_py.shape(0);
+    auto cols = img_py.shape(1);
+    auto type = CV_8UC3;
+    cv::Mat img(rows, cols, type, (unsigned char*)img_py.data());
+    if (img.empty())
+        throw std::runtime_error("The image is empty.");
 
     // detect corners and checkerboards
     cbdetect::find_corners(img, corners, params);
@@ -34,7 +35,7 @@ std::vector<py::array_t<double>> detect(const char* filename) {
 
     // loop boards
     for (const auto& board: boards) {
-        int j = -1;
+        int j = 0;
         size_t h = board.idx.size() - 2;
         size_t w = board.idx[0].size() - 2;
         size_t size = h*w*2;
@@ -42,7 +43,6 @@ std::vector<py::array_t<double>> detect(const char* filename) {
 
         // loop board rows
         for (const auto& row: board.idx) {
-            int k = 0;
 
             // loop row indices
             for (const int i: row) {
@@ -50,25 +50,25 @@ std::vector<py::array_t<double>> detect(const char* filename) {
                     continue;
                 }
                 const cv::Point2d corner(corners.p[i]);
-                points[j*2*w + 2*k] = (double) corner.x;
-                points[j*2*w + 2*k + 1] = (double) corner.y;
-                k++;
+                points[j*2] = (double) corner.x;
+                points[j*2 + 1] = (double) corner.y;
+                j++;
             }
-            j++;
         }
 
-        // Create a Python object that will free the allocated
-        // memory when destroyed:
+        // Create a Python object that will free the allocated memory when destroyed
         py::capsule free_when_done(points, [](void *f) {
             double *points = reinterpret_cast<double *>(f);
             delete[] points;
         });
 
-        // Cast to py:array so that is interpreted as Numpy array in Python. Explanation:
-        // https://github.com/pybind/pybind11/issues/1299#issuecomment-368815504
-        boardPyArray = py::array_t<double>(std::vector<ptrdiff_t>{(long int)h, (long int)w, 2},
-                                                 &points[0]);
-        output.push_back(boardPyArray);
+        // Create a Numpy array
+        board_py_array = py::array_t<double>(
+            {(long int)h, (long int)w, (long int)2},                // shape
+            {w*2*sizeof(double), 2*sizeof(double), sizeof(double)}, // C-style contiguous strides for double
+            points,                                                 // the data pointer
+            free_when_done);                                        // numpy array references this parent
+        output.push_back(board_py_array);
     }
     return output;
 }
