@@ -22,10 +22,20 @@ std::vector<py::array_t<double>> detect(const py::array_t<uint8_t>& img_py) {
     params.show_processing = false;
 
     // cast image and verify its correctness
+    if (!img_py.is(py::dtype::of<uint8_t>()))
+        throw std::runtime_error("Only images of dtype uint8_t are accepted.");
+    if (img_py.ndim() < 2 || img_py.ndim() > 3)
+        throw std::runtime_error("Only images with 2 or 3 channels are accepted.");
     auto rows = img_py.shape(0);
     auto cols = img_py.shape(1);
-    bool grayscale_img = (img_py.ndim() == 2) ? true : false;
-    auto type = (grayscale_img) ? CV_8UC1 : CV_8UC3;
+    int type;
+    if (img_py.ndim() == 2 || img_py.shape(2) == 1)
+        type = CV_8UC1; // grayscale
+    else if (img_py.shape(2) == 3)
+        type = CV_8UC3; // 3-channels
+    else
+        throw std::runtime_error("The image type is currently not handled.\
+ Images handled are grayscale and 3-channels.");
     cv::Mat img(rows, cols, type, const_cast<uint8_t *>(img_py.data()));
     if (img.empty())
         throw std::runtime_error("The image is empty.");
